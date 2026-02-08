@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>SageReader</title>
+    
+    <!-- React & ReactDOM (UMD - Global) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for parsing JSX in browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sage: '#387E82',
+              coolgray: '#9CA3AF',
+              deepteal: '#FFFFFF', 
+              burgundy: '#4C1926',
+              offwhite: '#000000', 
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['"Lato"', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+      body {
+        -webkit-tap-highlight-color: transparent;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-black text-white h-screen w-screen overflow-hidden selection:bg-white selection:text-black">
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // --- ICONS ---
+      const Icons = {
+        Search: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        ),
+        ChevronLeft: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6"/></svg>
+        ),
+        Bookmark: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        ),
+        Settings: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        ),
+        MoreHorizontal: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        ),
+        Sun: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        ),
+        Moon: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        ),
+        Library: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+        ),
+        User: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        ),
+        Compass: ({ size = 24, className }) => (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        )
+      };
+
+      // --- MOCK DATA ---
+      const MOCK_CONTENT = `
+        Chapter 1: The Beginning
+
+        The morning air was crisp, carrying the scent of pine and damp earth. It was the kind of silence that felt heavy, pregnant with the anticipation of something inevitable. She stood by the window, tracing the condensation with a fingertip, her breath fogging the glass further.
+
+        "We don't have much time," a voice said from the shadows behind her. It was deep, resonant, and familiar.
+
+        She didn't turn around. "Time is a construct we chose to ignore long ago."
+
+        The floorboards creaked. He was moving closer. The library was vast, filled with books that had seen centuries pass like fleeting moments. Dust motes danced in the single beam of sunlight that managed to pierce through the heavy velvet drapes.
+      `;
+
+      const MOCK_BOOKS = [
+        { id: '1', title: 'The Silent Ocean', author: 'Elena Vance', coverUrl: 'https://picsum.photos/id/24/300/450', progress: 45, totalPageCount: 320, currentPage: 144, content: MOCK_CONTENT },
+        { id: '2', title: 'Echoes of Old World', author: 'Marcus Thorne', coverUrl: 'https://picsum.photos/id/28/300/450', progress: 10, totalPageCount: 450, currentPage: 45, content: MOCK_CONTENT },
+        { id: '3', title: 'Midnight in Kyoto', author: 'Haruki Sato', coverUrl: 'https://picsum.photos/id/42/300/450', progress: 88, totalPageCount: 210, currentPage: 185, content: MOCK_CONTENT },
+        { id: '4', title: 'Design of Thought', author: 'Julia Reiner', coverUrl: 'https://picsum.photos/id/30/300/450', progress: 0, totalPageCount: 180, currentPage: 0, content: MOCK_CONTENT },
+        { id: '5', title: 'Botanist Secret', author: 'Arthur Green', coverUrl: 'https://picsum.photos/id/60/300/450', progress: 2, totalPageCount: 400, currentPage: 8, content: MOCK_CONTENT },
+        { id: '6', title: 'Urban Solitude', author: 'Sarah Chen', coverUrl: 'https://picsum.photos/id/90/300/450', progress: 100, totalPageCount: 250, currentPage: 250, content: MOCK_CONTENT }
+      ];
+
+      // --- COMPONENTS ---
+
+      const ProgressBar = ({ progress, className = '' }) => (
+        <div className={`w-full bg-gray-200/30 rounded-full h-1.5 overflow-hidden ${className}`}>
+          <div className="bg-burgundy h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
+        </div>
+      );
+
+      const LibraryView = ({ books, onBookClick }) => (
+        <div className="flex flex-col h-full bg-black relative">
+          <header className="px-10 py-6 pt-12 flex justify-between items-end bg-black sticky top-0 z-10 border-b border-white/5">
+            <div>
+              <h2 className="text-gray-500 text-[10px] font-sans font-bold tracking-[0.3em] uppercase mb-1">Library</h2>
+              <h1 className="text-2xl font-serif text-white font-medium tracking-tight">My Books</h1>
+            </div>
+            <button className="p-2 -mr-2 rounded-full text-white hover:bg-white/10 transition-colors"><Icons.Search size={22} /></button>
+          </header>
+
+          <div className="flex-1 overflow-y-auto no-scrollbar px-10 py-8 pb-32">
+            <div className="grid grid-cols-5 gap-x-10 gap-y-12">
+              {books.map((book) => (
+                <div key={book.id} onClick={() => onBookClick(book)} className="group cursor-pointer flex flex-col">
+                  {/* Rounding increased to 2xl/3xl for a more organic feel */}
+                  <div className="relative w-full aspect-[2/3] mb-5 rounded-2xl group-hover:opacity-90 transition-all duration-300 ease-out overflow-hidden bg-[#111] shadow-2xl shadow-black ring-1 ring-white/5">
+                    <img src={book.coverUrl} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700" loading="lazy" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-white/20 opacity-20" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                     {/* Increased font size for title and author */}
+                     <h3 className="font-serif text-white text-xl md:text-2xl leading-tight line-clamp-2 min-h-[2.4em] group-hover:text-gray-200 transition-colors">
+                       {book.title}
+                     </h3>
+                     <p className="font-sans text-gray-400 text-base md:text-lg font-medium tracking-wide truncate">
+                        {book.author}
+                     </p>
+                     <div className="pt-2 flex items-center gap-2 opacity-60">
+                        <div className="flex-1"><ProgressBar progress={book.progress} className="h-[2px]" /></div>
+                        <span className="text-[10px] font-bold text-gray-500">{book.progress}%</span>
+                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+
+      const ReaderView = ({ book, onBack }) => {
+        const [showControls, setShowControls] = useState(true);
+        const [theme, setTheme] = useState('dark');
+        const [fontSize, setFontSize] = useState(18);
+        const cycleFontSize = () => setFontSize(prev => prev === 26 ? 16 : prev + 4);
+
+        return (
+          <div className={`h-full w-full relative flex flex-col transition-colors duration-500 ${theme === 'light' ? 'bg-[#F9F7F1]' : 'bg-[#0a0a0a]'}`}>
+            <header className={`fixed top-0 left-0 right-0 z-20 ${theme === 'light' ? 'bg-[#F9F7F1]/95 text-black border-black/5' : 'bg-black/80 text-white border-white/5'} backdrop-blur-md px-4 py-4 pt-12 flex justify-between items-center transition-transform ${showControls ? 'translate-y-0' : '-translate-y-full'}`}>
+              <button onClick={onBack} className={`p-2 rounded-full ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/10'}`}><Icons.ChevronLeft size={24} /></button>
+              <h2 className="font-serif font-bold text-sm uppercase tracking-wider truncate max-w-[200px]">{book.title}</h2>
+              <button className={`p-2 rounded-full ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/10'}`}><Icons.Bookmark size={24} /></button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto no-scrollbar" onClick={() => setShowControls(!showControls)}>
+               <div className="max-w-2xl mx-auto px-6 py-32 md:px-12">
+                  <div className="mb-12 text-center">
+                    <span className="block text-xs font-sans tracking-[0.2em] uppercase mb-4 opacity-60">Chapter 1</span>
+                    <h1 className="font-serif text-3xl font-bold mb-8">The Beginning</h1>
+                    <div className="w-12 h-0.5 bg-burgundy mx-auto rounded-full" />
+                  </div>
+                  <div className={`font-serif leading-[1.8] text-justify ${theme === 'light' ? 'text-black' : 'text-gray-300'}`} style={{ fontSize: `${fontSize}px` }}>
+                    <p className="mb-6 indent-8">{book.content}</p>
+                    <p className="mb-6 indent-8">The floorboards creaked. He was moving closer. The library was vast, filled with books that had seen centuries pass like fleeting moments.</p>
+                  </div>
+               </div>
+            </div>
+
+            <footer className={`fixed bottom-0 left-0 right-0 z-20 ${theme === 'light' ? 'bg-[#F9F7F1]/95 border-black/5' : 'bg-black/80 border-white/5'} backdrop-blur-md border-t px-6 py-6 transition-transform ${showControls ? 'translate-y-0' : '-translate-y-full'}`}>
+              <div className="max-w-2xl mx-auto flex flex-col gap-4">
+                <div className="text-center text-xs font-bold tracking-widest uppercase opacity-60">Page {book.currentPage} of {book.totalPageCount} | {Math.round((book.currentPage/book.totalPageCount)*100)}%</div>
+                <div className="flex justify-between items-center px-4">
+                   <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="flex flex-col items-center gap-1">
+                     {theme === 'light' ? <Icons.Moon size={20} /> : <Icons.Sun size={20} />}
+                     <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">Theme</span>
+                   </button>
+                   <button onClick={cycleFontSize} className="flex flex-col items-center gap-1">
+                     <div className="font-serif text-lg">Aa</div>
+                     <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">Type</span>
+                   </button>
+                   <button className="flex flex-col items-center gap-1"><Icons.Settings size={20} /><span className="text-[10px] uppercase font-bold tracking-wider opacity-50">Set</span></button>
+                   <button className="flex flex-col items-center gap-1"><Icons.MoreHorizontal size={20} /><span className="text-[10px] uppercase font-bold tracking-wider opacity-50">More</span></button>
+                </div>
+              </div>
+            </footer>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const [view, setView] = useState('library');
+        const [selectedBook, setSelectedBook] = useState(null);
+
+        return (
+          <div className="h-full w-full bg-black font-sans text-white overflow-hidden">
+            {view === 'reader' && selectedBook ? (
+              <ReaderView book={selectedBook} onBack={() => setView('library')} />
+            ) : (
+              <>
+                <LibraryView books={MOCK_BOOKS} onBookClick={(b) => { setSelectedBook(b); setView('reader'); }} />
+                <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/10 z-50">
+                   <div className="flex justify-around items-center py-4 pb-6">
+                      <Icons.Library size={22} className="text-white" />
+                      <Icons.Compass size={22} className="text-gray-600" />
+                      <Icons.User size={22} className="text-gray-600" />
+                   </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
