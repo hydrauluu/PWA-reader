@@ -1,57 +1,110 @@
+import os
+
 import requests
 from django.conf import settings
 from lxml import html
 
 
-def search_books(query):
-    try:
-        proxies = {
-            "http": "socks5h://127.0.0.1:9050",
-            "https": "socks5h://127.0.0.1:9050",
+class FlibustaService:
+    def __init__(self):
+        self.flibusta_onion = settings.FLIBUSTA_ONION
+        self.tor_proxy = {
+            "http": f"socks5h://{settings.TOR_PROXY_HOST}:{settings.TOR_PROXY_PORT}",
+            "https": f"socks5h://{settings.TOR_PROXY_HOST}:{settings.TOR_PROXY_PORT}",
         }
-        search_url = f"{settings.FLIBUSTA_ONION_URL}/booksearch"
-        params = {"ask": query}
-        response = requests.get(search_url, params=params, proxies=proxies, timeout=30)
-        response.raise_for_status()
+        self.session = requests.Session()
+        self.session.proxies.update(self.tor_proxy)
 
-        tree = html.fromstring(response.content)
-        books = []
-        for book_element in tree.xpath("//li"):
-            title_element = book_element.xpath('.//a[contains(@href, "/b/")]')
-            author_element = book_element.xpath('.//a[contains(@href, "/a/")]')
+    def search(self, query):
+        if not query or not query.strip():
+            return []
 
-            if title_element and author_element:
-                title = title_element[0].text_content().strip()
-                author = author_element[0].text_content().strip()
-                flibusta_id = title_element[0].get("href").split("/")[-1]
+        try:
+            search_url = f"{self.flibusta_onion}/booksearch"
+            params = {"ask": query.strip()}
 
-                books.append(
+            response = self.session.get(search_url, params=params, timeout=30)
+            response.raise_for_status()
+
+            tree = html.fromstring(response.content)
+
+            results = []
+            book_links = tree.xpath('//ul/li/a[contains(@href, "/b/")]')
+
+            for link in book_links[:20]:
+                title_text = link.text_content().strip()
+                href = link.get("href")
+
+                if not href or not title_text:
+                    continue
+
+                book_id = href.split("/b/")[-1].split("/")[0]
+
+                author = "Неизвестный автор"
+                title = title_text
+
+                parent = link.getparent()
+                if parent is not None:
+                    full_text = parent.text_content().strip()
+
+                    for separator in [" — ", " - ", ": ", "—", " – "]:
+                        if separator in full_text:
+                            parts = full_text.split(separator, 1)
+                            potential_author = parts[0].strip()
+                            potential_title = (
+                                parts[1].strip() if len(parts) > 1 else title_text
+                            )
+
+                            if (
+                                len(potential_author) > 0
+                                and len(potential_author) < 100
+                            ):
+                                author = potential_author
+                                title = potential_title
+                                break
+
+                results.append(
                     {
+                        "id": book_id,
                         "title": title,
                         "author": author,
-                        "flibusta_id": flibusta_id,
+                        "url": f"{self.flibusta_onion}{href}",
                     }
                 )
-        return books
-    except requests.exceptions.RequestException as e:
-        # For development, if Tor is not available, return mock data
-        if settings.DEBUG:
-            return [
-                {"title": "Mock Book 1", "author": "Mock Author 1", "flibusta_id": "1"},
-                {"title": "Mock Book 2", "author": "Mock Author 2", "flibusta_id": "2"},
-            ]
-        return []
 
+            return results
 
-def download_book(flibusta_id, book_format="fb2"):
-    try:
-        proxies = {
-            "http": "socks5h://127.0.0.1:9050",
-            "https": "socks5h://127.0.0.1:9050",
-        }
-        download_url = f"{settings.FLIBUSTA_ONION_URL}/b/{flibusta_id}/{book_format}"
-        response = requests.get(download_url, proxies=proxies, timeout=60)
-        response.raise_for_status()
-        return response.content
-    except requests.exceptions.RequestException as e:
-        return None
+        except Exception as e:
+            raise Exception(f"Ошибка поиска на Флибусте: {str(e)}")
+
+    def download_book(self, book_id):
+        try:
+            download_url = f"{self.flibusta_onion}/b/{book_id}/fb2"
+
+            response = self.session.get(download_url, timeout=60)
+            response.raise_for_status()
+
+            if "application" not in response.headers.get("Content-Type", ""):
+                raise Exception(
+                    "Некорректный тип контента. Книга может быть недоступна."
+                )
+
+            filename = f"book_{book_id}.fb2"
+
+            content_disposition = response.headers.get("Content-Disposition", "")
+            if "filename=" in content_disposition:
+                try:
+                    filename = content_disposition.split("filename=")[1].strip('"')
+                except:
+                    pass
+
+            temp_path = os.path.join(settings.MEDIA_ROOT, "books", filename)
+            os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+
+            with open(temp_path, "wb") as f:
+                f.write(response.content)
+
+            return temp_path
+
+        except Exception as e:
+            raise Exception(f"Ошибка скачивания книги: {str(e)}")

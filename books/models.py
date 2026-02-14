@@ -12,6 +12,8 @@ class Book(models.Model):
     added_date = models.DateTimeField(auto_now_add=True)
     language = models.CharField(max_length=50, default="ru")
     description = models.TextField(blank=True)
+    progress_percent = models.FloatField(default=0)
+    last_position = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title

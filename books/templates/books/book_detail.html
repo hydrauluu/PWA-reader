@@ -1,7 +1,117 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<div
+    x-data="{ showControls: true, theme: 'dark', fontSize: 18 }"
+    :class="{ 'bg-[#F9F7F1]': theme === 'light', 'bg-[#0a0a0a]': theme === 'dark' }"
+    class="h-full w-full relative flex flex-col transition-colors duration-500"
+>
+    <header
+        :class="{ 'bg-[#F9F7F1]/95 text-black border-black/5': theme === 'light', 'bg-black/80 text-white border-white/5': theme === 'dark', 'translate-y-0': showControls, '-translate-y-full': !showControls }"
+        class="fixed top-0 left-0 right-0 z-20 backdrop-blur-md px-4 py-4 pt-12 flex justify-between items-center transition-transform"
+    >
+        <button
+            @click="window.history.back()"
+            class="p-2 rounded-full"
+            :class="{ 'hover:bg-black/5': theme === 'light', 'hover:bg-white/10': theme === 'dark' }"
+        >
+            {% include "icons/chevron-left.html" %}
+        </button>
+        <h2
+            class="font-serif font-bold text-sm uppercase tracking-wider truncate max-w-[200px]"
+        >
+            {{ book.title }}
+        </h2>
+        <button
+            class="p-2 rounded-full"
+            :class="{ 'hover:bg-black/5': theme === 'light', 'hover:bg-white/10': theme === 'dark' }"
+        >
+            {% include "icons/bookmark.html" %}
+        </button>
+    </header>
 
-{% block content %}
-    <h1>{{ book.title }}</h1>
-    <p>by {{ book.author }}</p>
-    <p>{{ book.description }}</p>
+    <div
+        class="flex-1 overflow-y-auto no-scrollbar"
+        @click="showControls = !showControls"
+    >
+        <div class="max-w-2xl mx-auto px-6 py-32 md:px-12">
+            <div class="mb-12 text-center">
+                <span
+                    class="block text-xs font-sans tracking-[0.2em] uppercase mb-4 opacity-60"
+                    >Chapter 1</span
+                >
+                <h1 class="font-serif text-3xl font-bold mb-8">
+                    The Beginning
+                </h1>
+                <div class="w-12 h-0.5 bg-burgundy mx-auto rounded-full"></div>
+            </div>
+            <div
+                class="font-serif leading-[1.8] text-justify"
+                :class="{ 'text-black': theme === 'light', 'text-gray-300': theme === 'dark' }"
+                :style="{ fontSize: `${fontSize}px` }"
+            >
+                {# This will be loaded with HTMX #}
+                <div
+                    hx-get="{% url 'books:book-content' book.pk %}"
+                    hx-trigger="load"
+                    hx-swap="innerHTML"
+                >
+                    <p class="mb-6 indent-8">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer
+        :class="{ 'bg-[#F9F7F1]/95 border-black/5': theme === 'light', 'bg-black/80 border-white/5': theme === 'dark', 'translate-y-0': showControls, 'translate-y-full': !showControls }"
+        class="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-md border-t px-6 py-6 transition-transform"
+    >
+        <div class="max-w-2xl mx-auto flex flex-col gap-4">
+            <div
+                class="text-center text-xs font-bold tracking-widest uppercase opacity-60"
+            >
+                Page X of Y | Z%
+            </div>
+            <div class="flex justify-between items-center px-4">
+                <button
+                    @click="theme = (theme === 'light' ? 'dark' : 'light')"
+                    class="flex flex-col items-center gap-1"
+                >
+                    <template x-if="theme === 'light'"
+                        >{% include "icons/moon.html" %}</template
+                    >
+                    <template x-if="theme === 'dark'"
+                        >{% include "icons/sun.html" %}</template
+                    >
+                    <span
+                        class="text-[10px] uppercase font-bold tracking-wider opacity-50"
+                        >Theme</span
+                    >
+                </button>
+                <button
+                    @click="fontSize = (fontSize === 26 ? 16 : fontSize + 4)"
+                    class="flex flex-col items-center gap-1"
+                >
+                    <div class="font-serif text-lg">Aa</div>
+                    <span
+                        class="text-[10px] uppercase font-bold tracking-wider opacity-50"
+                        >Type</span
+                    >
+                </button>
+                <button class="flex flex-col items-center gap-1">
+                    {% include "icons/settings.html" %}
+                    <span
+                        class="text-[10px] uppercase font-bold tracking-wider opacity-50"
+                        >Set</span
+                    >
+                </button>
+                <button class="flex flex-col items-center gap-1">
+                    {% include "icons/more-horizontal.html" %}
+                    <span
+                        class="text-[10px] uppercase font-bold tracking-wider opacity-50"
+                        >More</span
+                    >
+                </button>
+            </div>
+        </div>
+    </footer>
+</div>
 {% endblock %}

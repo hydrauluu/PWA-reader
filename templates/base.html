@@ -1,10 +1,78 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>fl-reader</title>
-</head>
-<body>
-    {% block content %}
-    {% endblock %}
-</body>
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>{% block title %}SageReader{% endblock %}</title>
+
+        <!-- HTMX and Alpine.js -->
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+            rel="stylesheet"
+        />
+
+        <!-- Tailwind Config -->
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            sage: "#387E82",
+                            coolgray: "#9CA3AF",
+                            deepteal: "#FFFFFF",
+                            burgundy: "#4C1926",
+                            offwhite: "#000000",
+                        },
+                        fontFamily: {
+                            serif: ['"Playfair Display"', "serif"],
+                            sans: ['"Lato"', "sans-serif"],
+                        },
+                    },
+                },
+            };
+        </script>
+
+        <style>
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            body {
+                -webkit-tap-highlight-color: transparent;
+            }
+            /* Add a transition for hx-swap-oob swaps */
+            [hx-swap-oob] {
+                transition: opacity 0.5s ease-in-out;
+            }
+        </style>
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body
+        class="bg-black text-white h-screen w-screen overflow-hidden selection:bg-white selection:text-black font-sans"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    >
+        <main id="main-content" class="h-full w-full">
+            {% block content %}{% endblock %}
+        </main>
+
+        {% block extra_js %}{% endblock %}
+    </body>
 </html>

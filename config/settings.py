@@ -33,11 +33,26 @@ ALLOWED_HOSTS = config(
     cast=lambda v: [s.strip() for s in v.split(",")],
 )
 
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
 # Flibusta URLs
-FLIBUSTA_URL = config("FLIBUSTA_URL", default="https://flibusta.is")
-FLIBUSTA_ONION_URL = config(
-    "FLIBUSTA_ONION_URL", default="http://flibustahezeous3.onion"
+# FLIBUSTA_URL = config("FLIBUSTA_URL", default="https://flibusta.is")
+FLIBUSTA_ONION = config(
+    "FLIBUSTA_ONION",
+    default="http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion/",
 )
+
+# TOR Proxy
+TOR_PROXY_HOST = config("TOR_PROXY_HOST", default="127.0.0.1")
+TOR_PROXY_PORT = config("TOR_PROXY_PORT", default="9050")
 
 
 # Application definition
