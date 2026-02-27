@@ -1,6 +1,33 @@
 {% for book in books %}
-    <div>
-        <h2>{{ book.title }}</h2>
-        <p>{{ book.author }}</p>
+<div hx-get="{% url 'books:book-detail' book.pk %}"
+     hx-target="#main-content"
+     hx-swap="innerHTML"
+     hx-push-url="true"
+     class="group cursor-pointer flex flex-col">
+    <div class="relative w-full aspect-[2/3] mb-5 rounded-2xl group-hover:opacity-90 transition-all duration-300 ease-out overflow-hidden bg-[#111] shadow-2xl shadow-black ring-1 ring-white/5">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" alt="{{ book.title }}" class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700" loading="lazy" />
+        {% else %}
+        <div class="w-full h-full bg-gray-800 flex items-center justify-center">
+            <span class="text-gray-500 text-xs text-center p-4">{{ book.title }}</span>
+        </div>
+        {% endif %}
+        <div class="absolute left-0 top-0 bottom-0 w-[1px] bg-white/20 opacity-20"></div>
     </div>
+    <div class="flex flex-col gap-2">
+        <h3 class="font-serif text-white text-xl md:text-2xl leading-tight line-clamp-2 min-h-[2.4em] group-hover:text-gray-200 transition-colors">
+            {{ book.title }}
+        </h3>
+        <p class="font-sans text-gray-400 text-base md:text-lg font-medium tracking-wide truncate">
+            {{ book.author }}
+        </p>
+        {# We don't have progress tracking yet, so I'll omit the progress bar for now. #}
+        {#
+        <div class="pt-2 flex items-center gap-2 opacity-60">
+            <div class="flex-1"><ProgressBar progress={book.progress} className="h-[2px]" /></div>
+            <span className="text-[10px] font-bold text-gray-500">{book.progress}%</span>
+        </div>
+        #}
+    </div>
+</div>
 {% endfor %}

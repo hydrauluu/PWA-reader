@@ -1,0 +1,25 @@
+{% if results %}
+<div class="flex flex-col divide-y divide-white/5">
+    {% for book in results %}
+    <div class="p-4 flex justify-between items-center group hover:bg-white/5 transition-colors">
+        <div>
+            <h3 class="font-serif text-white text-lg">{{ book.title }}</h3>
+            <p class="text-gray-400 text-sm">{{ book.author }}</p>
+        </div>
+        <form hx-post="{% url 'books:download-book' %}" hx-target="#main-content" hx-swap="innerHTML" class="htmx-indicator-sibling">
+            {% csrf_token %}
+            <input type="hidden" name="flibusta_id" value="{{ book.id }}">
+            <input type="hidden" name="title" value="{{ book.title }}">
+            <input type="hidden" name="author" value="{{ book.author }}">
+            <button type="submit" class="px-4 py-2 bg-burgundy/80 text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-burgundy transition-colors">
+                Download
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% elif query %}
+<div class="p-8 text-center text-gray-400">
+    <p>No books found for "{{ query }}".</p>
+</div>
+{% endif %}
